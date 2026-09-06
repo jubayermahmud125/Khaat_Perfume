@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* KHAAT — Black / Charcoal / Ivory / Gold */
+    --background: 40 30% 96%;
+    --foreground: 20 10% 12%;
+    --card: 40 30% 98%;
+    --card-foreground: 20 10% 12%;
+    --popover: 40 30% 98%;
+    --popover-foreground: 20 10% 12%;
+    --primary: 0 0% 8%;
+    --primary-foreground: 40 30% 96%;
+    --secondary: 40 20% 90%;
+    --secondary-foreground: 20 10% 15%;
+    --muted: 40 15% 92%;
+    --muted-foreground: 20 5% 45%;
+    --accent: 38 55% 45%;
+    --accent-foreground: 40 30% 96%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 40 30% 96%;
+    --border: 35 15% 85%;
+    --input: 35 15% 85%;
+    --ring: 38 55% 45%;
+    --radius: 0.125rem;
+
+    --gold: 40 65% 50%;
+    --gold-light: 44 60% 65%;
+    --gold-dark: 36 55% 38%;
+    --charcoal: 20 10% 15%;
+  }
+
+  .dark {
+    --background: 20 10% 8%;
+    --foreground: 40 25% 92%;
+    --card: 20 10% 10%;
+    --card-foreground: 40 25% 92%;
+    --popover: 20 10% 10%;
+    --popover-foreground: 40 25% 92%;
+    --primary: 40 30% 96%;
+    --primary-foreground: 20 10% 8%;
+    --secondary: 20 8% 18%;
+    --secondary-foreground: 40 25% 92%;
+    --muted: 20 8% 18%;
+    --muted-foreground: 40 15% 60%;
+    --accent: 40 65% 55%;
+    --accent-foreground: 20 10% 8%;
+    --destructive: 0 60% 40%;
+    --destructive-foreground: 40 25% 92%;
+    --border: 20 8% 20%;
+    --input: 20 8% 20%;
+    --ring: 40 65% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-jost), sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-playfair), serif;
+  }
+}
+
+@layer components {
+  .font-serif-display {
+    font-family: var(--font-playfair), serif;
+  }
+  .font-sans-body {
+    font-family: var(--font-jost), sans-serif;
+  }
+  .text-gold {
+    color: hsl(var(--gold));
+  }
+  .bg-gold {
+    background-color: hsl(var(--gold));
+  }
+  .border-gold {
+    border-color: hsl(var(--gold));
+  }
+  .bg-charcoal {
+    background-color: hsl(var(--charcoal));
+  }
+  .text-charcoal {
+    color: hsl(var(--charcoal));
+  }
+  .gold-gradient-text {
+    background: linear-gradient(135deg, hsl(44 60% 65%), hsl(40 65% 50%), hsl(36 55% 38%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.7s ease-out forwards;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+  .animate-fade-in-delayed {
+    animation: fadeInUp 0.7s ease-out 0.15s forwards;
+    opacity: 0;
+  }
+  .animate-fade-in-delayed-2 {
+    animation: fadeInUp 0.7s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+  .animate-fade-in-delayed-3 {
+    animation: fadeInUp 0.7s ease-out 0.45s forwards;
+    opacity: 0;
+  }
+  .animate-fade-in-delayed-4 {
+    animation: fadeInUp 0.7s ease-out 0.6s forwards;
+    opacity: 0;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s ease-out forwards;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--gold) / 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--gold) / 0.6);
+}
