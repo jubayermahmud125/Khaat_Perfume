@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, ShoppingBag, Star, Truck, Gift } from 'lucide-react';
+import { ArrowLeft, Check, ShoppingBag, Star, Truck } from 'lucide-react';
 import type { Product, ProductSize, Review } from '@/lib/types';
 import { getPriceForSize, SIZES, ATTAR_SIZES } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
@@ -22,7 +22,6 @@ const GIFT_BOTTLES = [
 ];
 
 export default function ProductDetails({ product, reviews }: ProductDetailsProps) {
-  // Detect if product is attar (either by flag or tag/category)
   const isAttarProduct = Boolean(
     product.is_attar || 
     product.scent_tags?.toLowerCase().includes('attar') ||
@@ -33,22 +32,17 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
   const [selectedSize, setSelectedSize] = useState<ProductSize>(availableSizes[0]);
   const [quantity, setQuantity] = useState(1);
   
-  // Gift Option States
   const [packagingTier, setPackagingTier] = useState<'standard' | 'luxury_bottle' | 'royal_gift_box'>('standard');
   const [selectedBottle, setSelectedBottle] = useState(GIFT_BOTTLES[0]);
   const [giftNote, setGiftNote] = useState('');
 
   const { addItem } = useCart();
 
-  // Price calculations
   const basePrice = getPriceForSize(product, selectedSize);
   const giftSurcharge = packagingTier === 'luxury_bottle' ? 350 : packagingTier === 'royal_gift_box' ? 750 : 0;
   const totalPrice = basePrice + giftSurcharge;
 
-  // Extract numeric size value reliably (e.g. "15ML" -> 15)
   const sizeInMl = Number.parseInt(selectedSize.replace(/\D/g, ''), 10) || 0;
-  
-  // Eligibility: Attar >= 15ML OR Spray >= 30ML
   const isEligibleForGift = isAttarProduct ? sizeInMl >= 15 : sizeInMl >= 30;
 
   const averageRating = reviews.length
@@ -125,7 +119,6 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
               {/* Packaging & Gift Options */}
               <div className="border-t border-border pt-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Gift className="w-4 h-4 text-gold" />
                   <h2 className="font-sans-body text-xs tracking-[0.2em] uppercase text-foreground/70">Packaging & Presentation</h2>
                 </div>
 
@@ -198,7 +191,7 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                   </div>
                 ) : (
                   <p className="text-xs font-sans-body text-foreground/50 italic">
-                    * Luxury gift packaging options are available for Attars (≥ 15ML) and Spray Perfumes (≥ 30ML).
+                    * Packaging upgrade options unlock for Attars (≥ 15ML) and Perfumes (≥ 30ML).
                   </p>
                 )}
               </div>
