@@ -15,7 +15,6 @@ interface ProductDetailsProps {
   reviews: Review[];
 }
 
-// Available luxury bottle styles
 const GIFT_BOTTLES = [
   { id: 'crystal-crown', name: 'Crystal Crown', image: '/images/bottles/crystal-crown.jpg' },
   { id: 'imperial-gold', name: 'Imperial Gold', image: '/images/bottles/imperial-gold.jpg' },
@@ -23,7 +22,14 @@ const GIFT_BOTTLES = [
 ];
 
 export default function ProductDetails({ product, reviews }: ProductDetailsProps) {
-  const availableSizes = product.is_attar ? ATTAR_SIZES : SIZES;
+  // Detect if product is attar (either by flag or tag/category)
+  const isAttarProduct = Boolean(
+    product.is_attar || 
+    product.scent_tags?.toLowerCase().includes('attar') ||
+    product.category?.toLowerCase().includes('attar')
+  );
+
+  const availableSizes = isAttarProduct ? ATTAR_SIZES : SIZES;
   const [selectedSize, setSelectedSize] = useState<ProductSize>(availableSizes[0]);
   const [quantity, setQuantity] = useState(1);
   
@@ -39,9 +45,11 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
   const giftSurcharge = packagingTier === 'luxury_bottle' ? 350 : packagingTier === 'royal_gift_box' ? 750 : 0;
   const totalPrice = basePrice + giftSurcharge;
 
-  // Eligibility check: Attars (>= 15ML), Sprays (>= 30ML)
-  const sizeInMl = parseInt(selectedSize.replace('ML', ''), 10) || 0;
-  const isEligibleForGift = product.is_attar ? sizeInMl >= 15 : sizeInMl >= 30;
+  // Extract numeric size value reliably (e.g. "15ML" -> 15)
+  const sizeInMl = Number.parseInt(selectedSize.replace(/\D/g, ''), 10) || 0;
+  
+  // Eligibility: Attar >= 15ML OR Spray >= 30ML
+  const isEligibleForGift = isAttarProduct ? sizeInMl >= 15 : sizeInMl >= 30;
 
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
@@ -82,7 +90,7 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
               </div>
               <p className="font-sans-body text-foreground/65 leading-relaxed mb-6">{product.description}</p>
 
-              {product.is_attar && (
+              {isAttarProduct && (
                 <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 rounded-sm">
                   <span className="text-xs font-sans-body tracking-[0.15em] uppercase text-gold">
                     100% Alcohol-Free • Long-Lasting Concentrated Oil
@@ -94,7 +102,7 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
               <div className="border-t border-border pt-6 mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-sans-body text-xs tracking-[0.2em] uppercase text-foreground/70">Choose your size</h2>
-                  <span className="font-serif-display text-2xl text-foreground">৳{totalPrice}</span>
+                  <span className="font-serif-display text-2xl text-foreground">Tk. {totalPrice}</span>
                 </div>
                 <div className={`grid ${availableSizes.length === 3 ? 'grid-cols-3' : 'grid-cols-5'} gap-2`}>
                   {availableSizes.map((size) => (
@@ -102,12 +110,11 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                       key={size} 
                       onClick={() => {
                         setSelectedSize(size);
-                        // Reset gift packaging if size is no longer eligible
-                        const newMl = parseInt(size.replace('ML', ''), 10) || 0;
-                        const eligible = product.is_attar ? newMl >= 15 : newMl >= 30;
+                        const newMl = Number.parseInt(size.replace(/\D/g, ''), 10) || 0;
+                        const eligible = isAttarProduct ? newMl >= 15 : newMl >= 30;
                         if (!eligible) setPackagingTier('standard');
                       }} 
-                      className={`py-3 border rounded-sm text-xs font-sans-body transition-colors ${selectedSize === size ? 'border-gold bg-gold/10 text-gold' : 'border-border text-foreground/60 hover:border-gold'}`}
+                      className={`py-3 border rounded-sm text-xs font-sans-body transition-colors ${selectedSize === size ? 'border-gold bg-gold/10 text-gold font-semibold' : 'border-border text-foreground/60 hover:border-gold'}`}
                     >
                       {size}
                     </button>
@@ -117,14 +124,13 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
 
               {/* Packaging & Gift Options */}
               <div className="border-t border-border pt-6 mb-6">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-4">
                   <Gift className="w-4 h-4 text-gold" />
                   <h2 className="font-sans-body text-xs tracking-[0.2em] uppercase text-foreground/70">Packaging & Presentation</h2>
                 </div>
 
                 {isEligibleForGift ? (
                   <div className="space-y-4">
-                    {/* Packaging Tiers */}
                     <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
@@ -141,7 +147,7 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                         className={`p-3 border rounded-sm text-left font-sans-body transition-all ${packagingTier === 'luxury_bottle' ? 'border-gold bg-gold/10 text-foreground' : 'border-border text-foreground/60 hover:border-gold'}`}
                       >
                         <p className="text-xs font-medium">Luxury Bottle</p>
-                        <p className="text-[10px] text-gold font-semibold">+৳350</p>
+                        <p className="text-[10px] text-gold font-semibold">+Tk. 350</p>
                       </button>
 
                       <button
@@ -150,11 +156,10 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                         className={`p-3 border rounded-sm text-left font-sans-body transition-all ${packagingTier === 'royal_gift_box' ? 'border-gold bg-gold/10 text-foreground' : 'border-border text-foreground/60 hover:border-gold'}`}
                       >
                         <p className="text-xs font-medium">Royal Gift Set</p>
-                        <p className="text-[10px] text-gold font-semibold">+৳750</p>
+                        <p className="text-[10px] text-gold font-semibold">+Tk. 750</p>
                       </button>
                     </div>
 
-                    {/* Visual Bottle Picker */}
                     {packagingTier !== 'standard' && (
                       <div className="pt-2">
                         <label className="block text-[10px] font-sans-body uppercase tracking-wider text-foreground/70 mb-2">
@@ -176,7 +181,6 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                       </div>
                     )}
 
-                    {/* Personal Gift Card Note */}
                     {packagingTier === 'royal_gift_box' && (
                       <div className="pt-2">
                         <label className="block text-[10px] font-sans-body uppercase tracking-wider text-foreground/70 mb-1">
