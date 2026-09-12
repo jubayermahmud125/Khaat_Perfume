@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, ShoppingBag, Star, Truck } from 'lucide-react';
+import { ArrowLeft, Check, ShoppingBag, Star, Truck, Gift } from 'lucide-react';
 import type { Product, ProductSize, Review } from '@/lib/types';
 import { getPriceForSize, SIZES, ATTAR_SIZES } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
@@ -15,13 +15,34 @@ interface ProductDetailsProps {
   reviews: Review[];
 }
 
+// Available luxury bottle styles
+const GIFT_BOTTLES = [
+  { id: 'crystal-crown', name: 'Crystal Crown', image: '/images/bottles/crystal-crown.jpg' },
+  { id: 'imperial-gold', name: 'Imperial Gold', image: '/images/bottles/imperial-gold.jpg' },
+  { id: 'noir-octagon', name: 'Noir Octagon', image: '/images/bottles/noir-octagon.jpg' },
+];
+
 export default function ProductDetails({ product, reviews }: ProductDetailsProps) {
   const availableSizes = product.is_attar ? ATTAR_SIZES : SIZES;
   const [selectedSize, setSelectedSize] = useState<ProductSize>(availableSizes[0]);
   const [quantity, setQuantity] = useState(1);
+  
+  // Gift Option States
+  const [packagingTier, setPackagingTier] = useState<'standard' | 'luxury_bottle' | 'royal_gift_box'>('standard');
+  const [selectedBottle, setSelectedBottle] = useState(GIFT_BOTTLES[0]);
+  const [giftNote, setGiftNote] = useState('');
+
   const { addItem } = useCart();
 
-  const price = getPriceForSize(product, selectedSize);
+  // Price calculations
+  const basePrice = getPriceForSize(product, selectedSize);
+  const giftSurcharge = packagingTier === 'luxury_bottle' ? 350 : packagingTier === 'royal_gift_box' ? 750 : 0;
+  const totalPrice = basePrice + giftSurcharge;
+
+  // Eligibility check: Attars (>= 15ML), Sprays (>= 30ML)
+  const sizeInMl = parseInt(selectedSize.replace('ML', ''), 10) || 0;
+  const isEligibleForGift = product.is_attar ? sizeInMl >= 15 : sizeInMl >= 30;
+
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 5;
@@ -31,10 +52,10 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
       product_id: product.id,
       product_name: product.name,
       product_slug: product.slug,
-      image_url: product.image_url || '',
+      image_url: packagingTier !== 'standard' ? selectedBottle.image : (product.image_url || ''),
       size: selectedSize,
       quantity,
-      unit_price: price,
+      unit_price: totalPrice,
       is_combo: false,
     });
   };
@@ -69,20 +90,116 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                 </div>
               )}
 
+              {/* Size Selection */}
               <div className="border-t border-border pt-6 mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-sans-body text-xs tracking-[0.2em] uppercase text-foreground/70">Choose your size</h2>
-                  <span className="font-serif-display text-2xl text-foreground">৳{price}</span>
+                  <span className="font-serif-display text-2xl text-foreground">৳{totalPrice}</span>
                 </div>
                 <div className={`grid ${availableSizes.length === 3 ? 'grid-cols-3' : 'grid-cols-5'} gap-2`}>
                   {availableSizes.map((size) => (
-                    <button key={size} onClick={() => setSelectedSize(size)} className={`py-3 border rounded-sm text-xs font-sans-body transition-colors ${selectedSize === size ? 'border-gold bg-gold/10 text-gold' : 'border-border text-foreground/60 hover:border-gold'}`}>
+                    <button 
+                      key={size} 
+                      onClick={() => {
+                        setSelectedSize(size);
+                        // Reset gift packaging if size is no longer eligible
+                        const newMl = parseInt(size.replace('ML', ''), 10) || 0;
+                        const eligible = product.is_attar ? newMl >= 15 : newMl >= 30;
+                        if (!eligible) setPackagingTier('standard');
+                      }} 
+                      className={`py-3 border rounded-sm text-xs font-sans-body transition-colors ${selectedSize === size ? 'border-gold bg-gold/10 text-gold' : 'border-border text-foreground/60 hover:border-gold'}`}
+                    >
                       {size}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Packaging & Gift Options */}
+              <div className="border-t border-border pt-6 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Gift className="w-4 h-4 text-gold" />
+                  <h2 className="font-sans-body text-xs tracking-[0.2em] uppercase text-foreground/70">Packaging & Presentation</h2>
+                </div>
+
+                {isEligibleForGift ? (
+                  <div className="space-y-4">
+                    {/* Packaging Tiers */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPackagingTier('standard')}
+                        className={`p-3 border rounded-sm text-left font-sans-body transition-all ${packagingTier === 'standard' ? 'border-gold bg-gold/10 text-foreground' : 'border-border text-foreground/60 hover:border-gold'}`}
+                      >
+                        <p className="text-xs font-medium">Standard</p>
+                        <p className="text-[10px] text-foreground/50">Included</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPackagingTier('luxury_bottle')}
+                        className={`p-3 border rounded-sm text-left font-sans-body transition-all ${packagingTier === 'luxury_bottle' ? 'border-gold bg-gold/10 text-foreground' : 'border-border text-foreground/60 hover:border-gold'}`}
+                      >
+                        <p className="text-xs font-medium">Luxury Bottle</p>
+                        <p className="text-[10px] text-gold font-semibold">+৳350</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPackagingTier('royal_gift_box')}
+                        className={`p-3 border rounded-sm text-left font-sans-body transition-all ${packagingTier === 'royal_gift_box' ? 'border-gold bg-gold/10 text-foreground' : 'border-border text-foreground/60 hover:border-gold'}`}
+                      >
+                        <p className="text-xs font-medium">Royal Gift Set</p>
+                        <p className="text-[10px] text-gold font-semibold">+৳750</p>
+                      </button>
+                    </div>
+
+                    {/* Visual Bottle Picker */}
+                    {packagingTier !== 'standard' && (
+                      <div className="pt-2">
+                        <label className="block text-[10px] font-sans-body uppercase tracking-wider text-foreground/70 mb-2">
+                          Select Bottle Style:
+                        </label>
+                        <div className="flex gap-3">
+                          {GIFT_BOTTLES.map((bottle) => (
+                            <button
+                              key={bottle.id}
+                              type="button"
+                              onClick={() => setSelectedBottle(bottle)}
+                              className={`flex flex-col items-center p-2 border rounded-sm transition-all ${selectedBottle.id === bottle.id ? 'border-gold bg-gold/10' : 'border-border hover:border-gold'}`}
+                            >
+                              <img src={bottle.image} alt={bottle.name} className="w-12 h-12 object-cover rounded-sm mb-1" />
+                              <span className="text-[10px] font-sans-body text-foreground/70">{bottle.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Personal Gift Card Note */}
+                    {packagingTier === 'royal_gift_box' && (
+                      <div className="pt-2">
+                        <label className="block text-[10px] font-sans-body uppercase tracking-wider text-foreground/70 mb-1">
+                          Personal Gift Card Message:
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={giftNote}
+                          onChange={(e) => setGiftNote(e.target.value)}
+                          placeholder="Type your custom message here..."
+                          className="w-full p-2.5 text-xs font-sans-body border border-border rounded-sm bg-background focus:outline-none focus:border-gold"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs font-sans-body text-foreground/50 italic">
+                    * Luxury gift packaging options are available for Attars (≥ 15ML) and Spray Perfumes (≥ 30ML).
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center border border-border rounded-sm">
                   <button aria-label="Decrease quantity" onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="w-11 h-12 flex items-center justify-center text-foreground/60 hover:text-gold text-xl">−</button>
