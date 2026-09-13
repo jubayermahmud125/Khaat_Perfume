@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Check, ShoppingBag, Star, Truck } from 'lucide-react';
@@ -35,19 +34,28 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
   const [packagingTier, setPackagingTier] = useState<'standard' | 'luxury_bottle' | 'royal_gift_box'>('standard');
   const [selectedBottle, setSelectedBottle] = useState(GIFT_BOTTLES[0]);
   const [giftNote, setGiftNote] = useState('');
-
   const { addItem } = useCart();
 
   const basePrice = getPriceForSize(product, selectedSize);
   const giftSurcharge = packagingTier === 'luxury_bottle' ? 350 : packagingTier === 'royal_gift_box' ? 750 : 0;
   const totalPrice = basePrice + giftSurcharge;
 
+  // Immediate eligibility parsing based on active selectedSize state
   const sizeInMl = Number.parseInt(selectedSize.replace(/\D/g, ''), 10) || 0;
   const isEligibleForGift = isAttarProduct ? sizeInMl >= 15 : sizeInMl >= 30;
 
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 5;
+
+  const handleSizeChange = (size: ProductSize) => {
+    setSelectedSize(size);
+    const newMl = Number.parseInt(size.replace(/\D/g, ''), 10) || 0;
+    const eligible = isAttarProduct ? newMl >= 15 : newMl >= 30;
+    if (!eligible) {
+      setPackagingTier('standard');
+    }
+  };
 
   const addToCart = () => {
     addItem({
@@ -83,7 +91,6 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                 <span className="font-sans-body text-sm text-foreground/50">{averageRating.toFixed(1)} {reviews.length ? `(${reviews.length} reviews)` : ''}</span>
               </div>
               <p className="font-sans-body text-foreground/65 leading-relaxed mb-6">{product.description}</p>
-
               {isAttarProduct && (
                 <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 rounded-sm">
                   <span className="text-xs font-sans-body tracking-[0.15em] uppercase text-gold">
@@ -102,12 +109,8 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                   {availableSizes.map((size) => (
                     <button 
                       key={size} 
-                      onClick={() => {
-                        setSelectedSize(size);
-                        const newMl = Number.parseInt(size.replace(/\D/g, ''), 10) || 0;
-                        const eligible = isAttarProduct ? newMl >= 15 : newMl >= 30;
-                        if (!eligible) setPackagingTier('standard');
-                      }} 
+                      type="button"
+                      onClick={() => handleSizeChange(size)} 
                       className={`py-3 border rounded-sm text-xs font-sans-body transition-colors ${selectedSize === size ? 'border-gold bg-gold/10 text-gold font-semibold' : 'border-border text-foreground/60 hover:border-gold'}`}
                     >
                       {size}
@@ -121,7 +124,6 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                 <div className="flex items-center gap-2 mb-4">
                   <h2 className="font-sans-body text-xs tracking-[0.2em] uppercase text-foreground/70">Packaging & Presentation</h2>
                 </div>
-
                 {isEligibleForGift ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-2">
@@ -133,7 +135,6 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                         <p className="text-xs font-medium">Standard</p>
                         <p className="text-[10px] text-foreground/50">Included</p>
                       </button>
-
                       <button
                         type="button"
                         onClick={() => setPackagingTier('luxury_bottle')}
@@ -142,7 +143,6 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                         <p className="text-xs font-medium">Luxury Bottle</p>
                         <p className="text-[10px] text-gold font-semibold">+Tk. 350</p>
                       </button>
-
                       <button
                         type="button"
                         onClick={() => setPackagingTier('royal_gift_box')}
@@ -208,19 +208,16 @@ export default function ProductDetails({ product, reviews }: ProductDetailsProps
                 </button>
               </div>
               <Link href="/checkout" onClick={addToCart} className="w-full h-12 border border-gold text-gold font-sans-body text-xs tracking-[0.18em] uppercase hover:bg-gold hover:text-white transition-colors rounded-sm flex items-center justify-center">Order Now</Link>
-
               <div className="flex items-center gap-3 mt-6 p-4 bg-secondary/50 rounded-sm">
                 <Truck className="w-5 h-5 text-gold" strokeWidth={1.5} />
                 <div><p className="font-sans-body text-sm text-foreground">Cash on Delivery available</p><p className="font-sans-body text-xs text-foreground/50">Fast delivery across Bangladesh</p></div>
               </div>
             </div>
           </div>
-
           <div className="grid md:grid-cols-2 gap-8 lg:gap-16 mt-20 pt-12 border-t border-border">
             <div><h2 className="font-serif-display text-2xl text-foreground mb-6">Fragrance Profile</h2><div className="space-y-5"><Note label="Top Notes" value={product.top_notes} /><Note label="Heart Notes" value={product.heart_notes} /><Note label="Base Notes" value={product.base_notes} /></div></div>
             <div><h2 className="font-serif-display text-2xl text-foreground mb-6">Why You&apos;ll Love It</h2><ul className="space-y-3 font-sans-body text-sm text-foreground/65"><li className="flex gap-3"><Check className="w-4 h-4 text-gold shrink-0" />Fresh and clean</li><li className="flex gap-3"><Check className="w-4 h-4 text-gold shrink-0" />Great for everyday use</li><li className="flex gap-3"><Check className="w-4 h-4 text-gold shrink-0" />Perfect for university and office</li><li className="flex gap-3"><Check className="w-4 h-4 text-gold shrink-0" />Easy to carry</li></ul></div>
           </div>
-
           {reviews.length > 0 && <div className="mt-20 pt-12 border-t border-border"><h2 className="font-serif-display text-2xl text-foreground mb-8">Customer Reviews</h2><div className="grid md:grid-cols-2 gap-4">{reviews.map((review) => <div key={review.id} className="p-5 border border-border rounded-sm"><div className="flex gap-1 mb-2">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="w-4 h-4 fill-gold text-gold" />)}</div><p className="font-sans-body text-sm text-foreground/65 italic mb-3">&ldquo;{review.review_text}&rdquo;</p><p className="font-sans-body text-xs text-foreground/50">— {review.customer_name}</p></div>)}</div></div>}
         </div>
       </main>
